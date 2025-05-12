@@ -1,1 +1,1 @@
-pip install dearpygui gitpython requests
+pip install dearpygui gitpython requests numpy time

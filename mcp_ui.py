@@ -89,7 +89,16 @@ def query_mcp_server(user_input, response_mode, memory_mode):
 
     # --- READ THE LLM RESPONSE AND RETURN TO THE UI --- #
 
-    return np.loadtxt('../llm_response.txt')
+    start_time = time.time()
+    while True:
+        if os.path.exists(file_path):
+            with open("../response.txt", "r", encoding="utf-8") as f:
+                content = f.read()
+            if content.strip():  # ensure it's not empty
+                return content
+        if time.time() - start_time > timeout:
+            return "Timed out waiting for LLM response."
+        time.sleep(1)
 
 # ---- VISUALS ---- #
 def file_clicked(sender, app_data, user_data):
