@@ -6,9 +6,10 @@ from mcp.server.fastmcp import FastMCP
 
 from github import Github
 
-with open("mcp_init_info.txt", "r") as f:
-    auth_token = f.readline().strip()
+with open("REPO_NAME.txt", "r") as f:
     repo_name = f.readline().strip()
+with open("GITHUB_TOKEN.txt", "r") as f:
+    auth_token = f.readline().strip()
 
 # Authentication is defined via github.Auth
 from github import Auth
