@@ -60,21 +60,26 @@ def build_file_tree(root_path, parent):
             dpg.add_button(label=entry, parent=parent, callback=file_clicked, user_data=full_path)
 
 # mcp query function
-def query_mcp_server(user_input, response_mode):
+def query_mcp_server(user_input, response_mode, memory_mode):
 
-    MCP_ENDPOINT = 
+    MCP_ENDPOINT = ""
 
     if response_mode == "Verbose":
-        verbosity = "\n\nPlease answer this question concisely"
+        verbosity = "Please answer this question concisely"
     else:
-        verbosity = "\n\nFeel free to elaborate in your response, explaiing your reasoning"
+        verbosity = "Feel free to elaborate in your response, explaiing your reasoning"
+
+    if memory_mode == "Memory":
+        memory = "Consider previous conversations when formulating your answer"
+    else:
+        memory = "Consider only the current conversation when formulating your answer"
 
     payload = {
-        "prefix": "Please base your answer to the following question only on the repository code:\n\n"
+        "prefix": "Please base your answer to the following question only on the repository code",
         "sulfix": verbosity,
         "user_prompt": user_input,
-        "repo": 
-    
+        "repo_dir": repo_root,
+        "memory": memory,
     }
 
     try:
@@ -99,8 +104,9 @@ def send_message_callback():
         return
     dpg.add_text(f"You: {user_message}", parent="chat_window")
     response_mode = dpg.get_value("response_mode")
+    memory_mode = dpg.get_value("memory_mode")
 
-    llm_response = query_mcp_server(user_message, response_mode)
+    llm_response = query_mcp_server(user_message, response_mode, memory_mode)
 
     dpg.add_text(f"LLM: {llm_response}", parent="chat_window")
     dpg.set_value("chat_input", "")
@@ -112,12 +118,13 @@ with dpg.window(label="RepoSurfer v1.0", tag="main_window"):
     with dpg.menu_bar():
         with dpg.menu(label="Settings"):
             dpg.add_combo(["Condensed", "Verbose"], default_value="Condensed", tag="response_mode", label="Response Detail Level")
+            dpg.add_combo(["Momeryless", "Memory"], default_value="Memory", tag="memory_mode", label="Retrieve memory from past conversations")
 
     with dpg.group(horizontal=True):
         # LEFT PANEL: Git Repo View
         with dpg.child_window(border=True, autosize_y=True, width=600):
             dpg.add_text("Enter GitHub Repository URL")
-            dpg.add_input_text(tag="repo_input", hint="https://github.com/user/repo")
+            dpg.add_input_text(tag="repo_input", hint="https://github.com/user/repo", width=-1)
             dpg.add_button(label="Load Repository", tag="load_repo_btn", callback=load_repo_callback)
             dpg.add_text("", tag="repo_status")
 
@@ -134,7 +141,7 @@ with dpg.window(label="RepoSurfer v1.0", tag="main_window"):
             dpg.add_text(" Ask Questions About the Code")
             with dpg.child_window(height=600, tag="chat_window", autosize_x=True):
                 dpg.add_text("RepoSurfer: Hello! Ask me anything about the code.")
-            dpg.add_input_text(tag="chat_input", hint="Type your question here...", on_enter=True, callback=send_message_callback)
+            dpg.add_input_text(tag="chat_input", hint="Type your question here...", on_enter=True, callback=send_message_callback, width=-1)
             dpg.add_button(label="Send", callback=send_message_callback)
 
 # Viewport configuration
