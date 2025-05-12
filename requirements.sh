@@ -1,0 +1,1 @@
+pip install dearpygui gitpython requests
