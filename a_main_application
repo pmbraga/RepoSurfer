@@ -1,15 +1,20 @@
-repo_adress = input("Please submit the Repo link:\n")
+#repo_adress = input("Please submit the Repo link:\n")
+
+prompt_prefix = "Please base your answer to the following question only on the repository code:\n\n"
 
 user_prompt = 0
+
+user_prompt = input("Prompt:\n")
 
 condesed = True
 
 if condesed == True:
-    prompt_suffix =  "\nPlease answer this question concisely"
+    prompt_suffix =  "\n\nPlease answer this question concisely"
 else:
-    prompt_suffix = "\nFeel free to elaborate in your response, explaiing your reasoning"
+    prompt_suffix = "\n\nFeel free to elaborate in your response, explaiing your reasoning"
 
 
-query = user_prompt + prompt_suffix
+query = prompt_prefix + user_prompt + prompt_suffix
 
-print(prompt_suffix)
+print(query)
+    
