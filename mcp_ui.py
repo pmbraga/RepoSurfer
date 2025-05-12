@@ -1,9 +1,22 @@
 import os
 import tempfile
 import git
+import shutil
+import atexit
 import dearpygui.dearpygui as dpg
+import requests
 
 repo_root = None  # global to store the root of the cloned repo
+
+# repo cloning functions
+def cleanup_temp_repo():
+    global repo_root
+    if repo_root and os.path.exists(repo_root):
+        try:
+            shutil.rmtree(repo_root)
+            print(f"Deleted temp repo at {repo_root}")
+        except Exception as e:
+            print(f"Failed to delete temp repo: {e}")
 
 def load_repo_callback():
     global repo_root
@@ -13,13 +26,13 @@ def load_repo_callback():
         dpg.set_value("repo_status", " Please enter a valid GitHub URL.")
         return
 
-    dpg.set_value("repo_status", "⏳ Cloning repository...")
+    dpg.set_value("repo_status", " Cloning repository...")
 
     try:
         temp_dir = tempfile.mkdtemp()
         git.Repo.clone_from(repo_url, temp_dir)
         repo_root = temp_dir
-        dpg.set_value("repo_status", f" Loaded: {repo_url}")
+        dpg.set_value("repo_status", f"Loaded: {repo_url}")
 
         dpg.hide_item("repo_input")
         dpg.hide_item("load_repo_btn")
@@ -33,7 +46,7 @@ def load_repo_callback():
         build_file_tree(repo_root, parent="repo_tree")
 
     except Exception as e:
-        dpg.set_value("repo_status", f" Failed to clone: {e}")
+        dpg.set_value("repo_status", f"Failed to clone: {e}")
 
 def build_file_tree(root_path, parent):
     for entry in sorted(os.listdir(root_path)):
@@ -46,13 +59,39 @@ def build_file_tree(root_path, parent):
         else:
             dpg.add_button(label=entry, parent=parent, callback=file_clicked, user_data=full_path)
 
+# mcp query function
+def query_mcp_server(user_input, response_mode):
+
+    MCP_ENDPOINT = 
+
+    if response_mode == "Verbose":
+        verbosity = "\n\nPlease answer this question concisely"
+    else:
+        verbosity = "\n\nFeel free to elaborate in your response, explaiing your reasoning"
+
+    payload = {
+        "prefix": "Please base your answer to the following question only on the repository code:\n\n"
+        "sulfix": verbosity,
+        "user_prompt": user_input,
+        "repo": 
+    
+    }
+
+    try:
+        response = requests.post(MCP_ENDPOINT, json=payload, timeout=30)
+        response.raise_for_status()
+        return response.json().get("response", "No response from server.")
+    except requests.exceptions.RequestException as e:
+        return f"Error contacting MCP server: {e}"
+
+# visuals
 def file_clicked(sender, app_data, user_data):
     try:
         with open(user_data, 'r', encoding="utf-8") as f:
             content = f.read()
         dpg.set_value("code_viewer", content)
     except Exception as e:
-        dpg.set_value("code_viewer", f"⚠️ Error reading file: {e}")
+        dpg.set_value("code_viewer", f"Error reading file: {e}")
 
 def send_message_callback():
     user_message = dpg.get_value("chat_input").strip()
@@ -61,11 +100,7 @@ def send_message_callback():
     dpg.add_text(f"You: {user_message}", parent="chat_window")
     response_mode = dpg.get_value("response_mode")
 
-    # Simulated LLM response
-    if response_mode == "Verbose":
-        llm_response = "Verbose response from the LLM explaining details..."
-    else:
-        llm_response = "Condensed summary from the LLM."
+    llm_response = query_mcp_server(user_message, response_mode)
 
     dpg.add_text(f"LLM: {llm_response}", parent="chat_window")
     dpg.set_value("chat_input", "")
@@ -73,7 +108,7 @@ def send_message_callback():
 # --- UI Definition ---
 dpg.create_context()
 
-with dpg.window(label="MCP GitHub Code Explorer", tag="main_window"):
+with dpg.window(label="RepoSurfer v1.0", tag="main_window"):
     with dpg.menu_bar():
         with dpg.menu(label="Settings"):
             dpg.add_combo(["Condensed", "Verbose"], default_value="Condensed", tag="response_mode", label="Response Detail Level")
@@ -81,7 +116,7 @@ with dpg.window(label="MCP GitHub Code Explorer", tag="main_window"):
     with dpg.group(horizontal=True):
         # LEFT PANEL: Git Repo View
         with dpg.child_window(border=True, autosize_y=True, width=600):
-            dpg.add_text("🔗 Enter GitHub Repository URL")
+            dpg.add_text("Enter GitHub Repository URL")
             dpg.add_input_text(tag="repo_input", hint="https://github.com/user/repo")
             dpg.add_button(label="Load Repository", tag="load_repo_btn", callback=load_repo_callback)
             dpg.add_text("", tag="repo_status")
@@ -91,19 +126,20 @@ with dpg.window(label="MCP GitHub Code Explorer", tag="main_window"):
                 pass
 
             dpg.add_spacer(height=10)
-            dpg.add_text(" Code Viewer", tag="code_label", show=False)
+            dpg.add_text("Code Viewer", tag="code_label", show=False)
             dpg.add_input_text(tag="code_viewer", multiline=True, readonly=True, width=-1, height=300, show=False)
 
         # RIGHT PANEL: Chat Interface
         with dpg.child_window(border=True, autosize_y=True):
             dpg.add_text(" Ask Questions About the Code")
             with dpg.child_window(height=600, tag="chat_window", autosize_x=True):
-                dpg.add_text("LLM: Hello! Ask me anything about the code.")
+                dpg.add_text("RepoSurfer: Hello! Ask me anything about the code.")
             dpg.add_input_text(tag="chat_input", hint="Type your question here...", on_enter=True, callback=send_message_callback)
             dpg.add_button(label="Send", callback=send_message_callback)
 
 # Viewport configuration
-dpg.create_viewport(title='MCP UI with GitHub Integration', width=1400, height=900)
+atexit.register(cleanup_temp_repo)
+dpg.create_viewport(title='RepoSurfer v1.0', width=1400, height=900)
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("main_window", True)
