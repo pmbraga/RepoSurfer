@@ -127,6 +127,10 @@ dpg.create_context()
 
 with dpg.window(label="RepoSurfer v1.0", tag="main_window"):
 
+    with dpg.font_registry():
+        default_font = dpg.add_font("/System/Library/Fonts/Supplemental/Tahoma.ttf", 20)
+        dpg.bind_font(default_font)
+
     # Menu options
     with dpg.menu_bar():
         with dpg.menu(label="Settings"):
@@ -138,7 +142,7 @@ with dpg.window(label="RepoSurfer v1.0", tag="main_window"):
         # LEFT PANEL: Git Repo View
         with dpg.child_window(border=True, autosize_y=True, width=600):
             dpg.add_text("Enter GitHub Repository URL")
-            dpg.add_input_text(tag="repo_input", hint="https://github.com/user/repo", width=-1)
+            dpg.add_input_text(tag="repo_input", on_enter=True, hint="https://github.com/user/repo", width=-1)
             dpg.add_button(label="Load Repository", tag="load_repo_btn", callback=load_repo_callback)
             dpg.add_text("", tag="repo_status")
 
