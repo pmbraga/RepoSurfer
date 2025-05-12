@@ -4,6 +4,7 @@ import git
 import shutil
 import atexit
 import dearpygui.dearpygui as dpg
+from urllib.parse import urlparse
 import requests
 import numpy
 import json
@@ -11,6 +12,7 @@ import json
 repo_root = None  # global to store the root of the cloned repo
 
 # ---- REPOSITORY CLONING AND LINKING ---- #
+
 def cleanup_temp_repo():
     global repo_root
     if repo_root and os.path.exists(repo_root):
@@ -29,6 +31,13 @@ def load_repo_callback():
         return
 
     dpg.set_value("repo_status", " Cloning repository...")
+
+    path = urlparse(repo_url).path.strip("/")
+    if path.endswith(".git"):
+        path = path[:-4]
+
+    with open("REPO_NAME.txt", "w") as f:
+        f.write(path)
 
     try:
         temp_dir = tempfile.mkdtemp()
@@ -122,17 +131,22 @@ def send_message_callback():
     dpg.add_text(f"LLM: {llm_response}", parent="chat_window")
     dpg.set_value("chat_input", "")
 
+def setup_github_token():
+
+    with open("GITHUB_TOKEN.txt", "w") as f:
+        f.write(dpg.get_value("github_token").strip())
+
 # --- UI DEFINITION --- #
 dpg.create_context()
 
 with dpg.window(label="RepoSurfer v1.0", tag="main_window"):
 
-    with dpg.font_registry():
-        default_font = dpg.add_font("/System/Library/Fonts/Supplemental/Tahoma.ttf", 20)
-        dpg.bind_font(default_font)
-
     # Menu options
     with dpg.menu_bar():
+        with dpg.menu(label="GitHub Access"):
+            dpg.add_input_text(tag="github_token", hint="Insert GitHub token", on_enter=True, callback=setup_github_token)
+            dpg.add_button(label="Send", callback=setup_github_token)
+
         with dpg.menu(label="Settings"):
             dpg.add_combo(["Condensed", "Verbose"], default_value="Condensed", tag="response_mode", label="Response Detail Level")
             dpg.add_combo(["Momeryless", "Memory"], default_value="Memory", tag="memory_mode", label="Retrieve memory from past conversations")
