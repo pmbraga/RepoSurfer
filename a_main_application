@@ -1,1 +1,15 @@
+repo_adress = input("Please submit the Repo link:\n")
 
+user_prompt = 0
+
+condesed = True
+
+if condesed == True:
+    prompt_suffix =  "\nPlease answer this question concisely"
+else:
+    prompt_suffix = "\nFeel free to elaborate in your response, explaiing your reasoning"
+
+
+query = user_prompt + prompt_suffix
+
+print(prompt_suffix)
