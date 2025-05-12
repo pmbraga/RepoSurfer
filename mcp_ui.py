@@ -5,10 +5,11 @@ import shutil
 import atexit
 import dearpygui.dearpygui as dpg
 import requests
+import json
 
 repo_root = None  # global to store the root of the cloned repo
 
-# repo cloning functions
+# ---- REPOSITORY CLONING AND LINKING ---- #
 def cleanup_temp_repo():
     global repo_root
     if repo_root and os.path.exists(repo_root):
@@ -59,10 +60,8 @@ def build_file_tree(root_path, parent):
         else:
             dpg.add_button(label=entry, parent=parent, callback=file_clicked, user_data=full_path)
 
-# mcp query function
+# ---- MCP QUERY LINK ---- #
 def query_mcp_server(user_input, response_mode, memory_mode):
-
-    MCP_ENDPOINT = ""
 
     if response_mode == "Verbose":
         verbosity = "Please answer this question concisely"
@@ -82,14 +81,11 @@ def query_mcp_server(user_input, response_mode, memory_mode):
         "memory": memory,
     }
 
-    try:
-        response = requests.post(MCP_ENDPOINT, json=payload, timeout=30)
-        response.raise_for_status()
-        return response.json().get("response", "No response from server.")
-    except requests.exceptions.RequestException as e:
-        return f"Error contacting MCP server: {e}"
+    with open("output.json", "w") as f:
+        json.dump(payload, f, indent=4)
 
-# visuals
+
+# ---- VISUALS ---- #
 def file_clicked(sender, app_data, user_data):
     try:
         with open(user_data, 'r', encoding="utf-8") as f:
@@ -111,16 +107,19 @@ def send_message_callback():
     dpg.add_text(f"LLM: {llm_response}", parent="chat_window")
     dpg.set_value("chat_input", "")
 
-# --- UI Definition ---
+# --- UI DEFINITION --- #
 dpg.create_context()
 
 with dpg.window(label="RepoSurfer v1.0", tag="main_window"):
+
+    # Menu options
     with dpg.menu_bar():
         with dpg.menu(label="Settings"):
             dpg.add_combo(["Condensed", "Verbose"], default_value="Condensed", tag="response_mode", label="Response Detail Level")
             dpg.add_combo(["Momeryless", "Memory"], default_value="Memory", tag="memory_mode", label="Retrieve memory from past conversations")
 
     with dpg.group(horizontal=True):
+
         # LEFT PANEL: Git Repo View
         with dpg.child_window(border=True, autosize_y=True, width=600):
             dpg.add_text("Enter GitHub Repository URL")
