@@ -1,1 +1,0 @@
-pip install dearpygui gitpython requests numpy time
