@@ -5,6 +5,7 @@ import shutil
 import atexit
 import dearpygui.dearpygui as dpg
 import requests
+import numpy
 import json
 
 repo_root = None  # global to store the root of the cloned repo
@@ -63,6 +64,8 @@ def build_file_tree(root_path, parent):
 # ---- MCP QUERY LINK ---- #
 def query_mcp_server(user_input, response_mode, memory_mode):
 
+
+    # --- SEND THE MESSAGE TO THE MCP SERVER --- #
     if response_mode == "Verbose":
         verbosity = "Please answer this question concisely"
     else:
@@ -84,6 +87,9 @@ def query_mcp_server(user_input, response_mode, memory_mode):
     with open("output.json", "w") as f:
         json.dump(payload, f, indent=4)
 
+    # --- READ THE LLM RESPONSE AND RETURN TO THE UI --- #
+
+    return np.loadtxt('../llm_response.txt')
 
 # ---- VISUALS ---- #
 def file_clicked(sender, app_data, user_data):
